@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import ContextoEstudos from "./Contexto.jsx";
 
-const ContextoEstudos = createContext(null);
 const CHAVE = "organizae-atividades";
 
 const atividadesIniciais = [
@@ -17,8 +17,11 @@ const atividadesIniciais = [
 function carregarAtividades() {
   try {
     const salvas = localStorage.getItem(CHAVE);
+
     if (!salvas) return atividadesIniciais;
+
     const dados = JSON.parse(salvas);
+
     return Array.isArray(dados) ? dados : atividadesIniciais;
   } catch {
     return atividadesIniciais;
@@ -44,9 +47,12 @@ export function ProvedorEstudos({ children }) {
   function alternarConclusao(id) {
     definirAtividades((anteriores) =>
       anteriores.map((atividade) =>
-        atividade.id === id ? { ...atividade, concluida: !atividade.concluida } : atividade
+        atividade.id === id
+          ? { ...atividade, concluida: !atividade.concluida }
+          : atividade
       )
     );
+
     mostrarAviso("Atividade atualizada!");
   }
 
@@ -55,29 +61,32 @@ export function ProvedorEstudos({ children }) {
       mostrarAviso("Digite o nome da atividade.", "erro");
       return false;
     }
+
     const nova = {
       id: Date.now(),
       titulo: titulo.trim(),
       disciplina,
       concluida: false
     };
+
     definirAtividades((anteriores) => [nova, ...anteriores]);
     mostrarAviso("Atividade adicionada!");
+
     return true;
   }
 
   return (
-    <ContextoEstudos.Provider value={{
-      atividades, aviso, mostrarAviso, fecharAviso,
-      alternarConclusao, adicionarAtividade
-    }}>
+    <ContextoEstudos.Provider
+      value={{
+        atividades,
+        aviso,
+        mostrarAviso,
+        fecharAviso,
+        alternarConclusao,
+        adicionarAtividade
+      }}
+    >
       {children}
     </ContextoEstudos.Provider>
   );
-}
-
-export function usarEstudos() {
-  const contexto = useContext(ContextoEstudos);
-  if (!contexto) throw new Error("Use usarEstudos dentro de ProvedorEstudos.");
-  return contexto;
 }

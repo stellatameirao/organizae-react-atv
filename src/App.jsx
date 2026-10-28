@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Acordeao from "./componentes/Acordeao.jsx";
 import MenuSuspenso from "./componentes/MenuSuspenso.jsx";
 import Paginacao from "./componentes/Paginacao.jsx";
 import BarraDeProgresso from "./componentes/BarraDeProgresso.jsx";
 import Abas from "./componentes/Abas.jsx";
 import Notificacao from "./componentes/Notificacao.jsx";
-import { ProvedorEstudos, usarEstudos } from "./contexto/ContextoEstudos.jsx";
+import { ProvedorEstudos } from "./contexto/ContextoEstudos.jsx";
+import useEstudos from "./contexto/useEstudos.js";
 
 const perguntas = [
   {
@@ -47,7 +48,7 @@ function Painel() {
     fecharAviso,
     alternarConclusao,
     adicionarAtividade
-  } = usarEstudos();
+  } = useEstudos();
 
   const [filtro, definirFiltro] = useState("todas");
   const [disciplinaFiltro, definirDisciplinaFiltro] = useState("Todas");
@@ -96,9 +97,15 @@ function Painel() {
     inicio + porPagina
   );
 
-  useEffect(() => {
+  function alterarFiltro(valor) {
+    definirFiltro(valor);
     definirPaginaAtual(1);
-  }, [filtro, disciplinaFiltro]);
+  }
+
+  function alterarDisciplinaFiltro(valor) {
+    definirDisciplinaFiltro(valor);
+    definirPaginaAtual(1);
+  }
 
   function cadastrarAtividade(evento) {
     evento.preventDefault();
@@ -124,7 +131,7 @@ function Painel() {
                 <MenuSuspenso
                   opcoes={opcoesFiltro}
                   valorSelecionado={filtro}
-                  aoAlterar={definirFiltro}
+                  aoAlterar={alterarFiltro}
                 />
               </div>
 
@@ -134,7 +141,7 @@ function Painel() {
                 <select
                   value={disciplinaFiltro}
                   onChange={(evento) =>
-                    definirDisciplinaFiltro(evento.target.value)
+                    alterarDisciplinaFiltro(evento.target.value)
                   }
                 >
                   <option>Todas</option>
