@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Acordeao from "./componentes/Acordeao.jsx";
 import MenuSuspenso from "./componentes/MenuSuspenso.jsx";
 import Paginacao from "./componentes/Paginacao.jsx";
@@ -39,6 +39,101 @@ const disciplinas = [
   "Engenharia de Software",
   "Algoritmos"
 ];
+
+function SeletorDisciplina({ valor, opcoes, aoAlterar, id }) {
+  const [aberto, definirAberto] = useState(false);
+  const referencia = useRef(null);
+  const referenciaBotao = useRef(null);
+  const referenciasOpcoes = useRef([]);
+
+  useEffect(() => {
+    function verificarClique(evento) {
+      if (!referencia.current?.contains(evento.target)) {
+        definirAberto(false);
+      }
+    }
+
+    function verificarTecla(evento) {
+      if (evento.key === "Escape") {
+        definirAberto(false);
+        if (referencia.current?.contains(document.activeElement)) {
+          referenciaBotao.current?.focus();
+        }
+      }
+    }
+
+    document.addEventListener("mousedown", verificarClique);
+    document.addEventListener("keydown", verificarTecla);
+
+    return () => {
+      document.removeEventListener("mousedown", verificarClique);
+      document.removeEventListener("keydown", verificarTecla);
+    };
+  }, []);
+
+  function selecionarOpcao(opcao) {
+    aoAlterar(opcao);
+    definirAberto(false);
+    referenciaBotao.current?.focus();
+  }
+
+  function controlarTeclado(evento, indice) {
+    if (evento.key === "ArrowDown") {
+      evento.preventDefault();
+      referenciasOpcoes.current[(indice + 1) % opcoes.length]?.focus();
+    } else if (evento.key === "ArrowUp") {
+      evento.preventDefault();
+      referenciasOpcoes.current[(indice - 1 + opcoes.length) % opcoes.length]?.focus();
+    }
+  }
+
+  function abrirPeloTeclado(evento) {
+    if (evento.key === "ArrowDown" || evento.key === "ArrowUp") {
+      evento.preventDefault();
+      definirAberto(true);
+      requestAnimationFrame(() => {
+        const indice = opcoes.indexOf(valor);
+        referenciasOpcoes.current[Math.max(0, indice)]?.focus();
+      });
+    }
+  }
+
+  return (
+    <div className="seletor-disciplina" ref={referencia}>
+      <button
+        id={id}
+        ref={referenciaBotao}
+        type="button"
+        className="botao-disciplina"
+        aria-expanded={aberto}
+        aria-controls={`${id}-opcoes`}
+        onClick={() => definirAberto(!aberto)}
+        onKeyDown={abrirPeloTeclado}
+      >
+        <span>{valor}</span>
+        <span aria-hidden="true">▾</span>
+      </button>
+
+      {aberto && (
+        <div id={`${id}-opcoes`} className="lista-disciplinas">
+          {opcoes.map((opcao, indice) => (
+            <button
+              key={opcao}
+              ref={(elemento) => { referenciasOpcoes.current[indice] = elemento; }}
+              type="button"
+              className={valor === opcao ? "selecionada" : ""}
+              aria-pressed={valor === opcao}
+              onClick={() => selecionarOpcao(opcao)}
+              onKeyDown={(evento) => controlarTeclado(evento, indice)}
+            >
+              {opcao}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Painel() {
   const {
@@ -135,22 +230,15 @@ function Painel() {
                 />
               </div>
 
-              <label className="campo-disciplina">
-                Disciplina
-
-                <select
-                  value={disciplinaFiltro}
-                  onChange={(evento) =>
-                    alterarDisciplinaFiltro(evento.target.value)
-                  }
-                >
-                  <option>Todas</option>
-
-                  {disciplinas.map((item) => (
-                    <option key={item}>{item}</option>
-                  ))}
-                </select>
-              </label>
+              <div className="campo-disciplina">
+                <label htmlFor="filtro-disciplina">Disciplina</label>
+                <SeletorDisciplina
+                  id="filtro-disciplina"
+                  valor={disciplinaFiltro}
+                  opcoes={["Todas", ...disciplinas]}
+                  aoAlterar={alterarDisciplinaFiltro}
+                />
+              </div>
 
               {atividadesVisiveis.length === 0 ? (
                 <p className="texto-suave">
@@ -220,20 +308,15 @@ function Painel() {
                   />
                 </label>
 
-                <label>
-                  Disciplina
-
-                  <select
-                    value={disciplina}
-                    onChange={(evento) =>
-                      definirDisciplina(evento.target.value)
-                    }
-                  >
-                    {disciplinas.map((item) => (
-                      <option key={item}>{item}</option>
-                    ))}
-                  </select>
-                </label>
+                <div className="campo-formulario-disciplina">
+                  <label htmlFor="cadastro-disciplina">Disciplina</label>
+                  <SeletorDisciplina
+                    id="cadastro-disciplina"
+                    valor={disciplina}
+                    opcoes={disciplinas}
+                    aoAlterar={definirDisciplina}
+                  />
+                </div>
 
                 <button
                   className="botao-principal"
